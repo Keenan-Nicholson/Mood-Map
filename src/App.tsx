@@ -24,6 +24,8 @@ function App() {
       })
     );
 
+    map.addControl(new maplibregl.NavigationControl());
+
     return () => {
       map.remove();
     };
