@@ -1,6 +1,30 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+}
+
+.maplibregl-ctrl-top-left {
+  position: absolute !important;
+  top: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.mood-button-control {
+  position: absolute !important;
+  border: 10px solid red;
+}
+
+.mood-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 3px;
+  color: rgb(0, 0, 0);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.mood-button:hover {
+  background-color: transparent !important;
 }
