@@ -20,24 +20,19 @@ class MoodButtonControl implements maplibregl.IControl {
     this._container = document.createElement("div");
     this._container.className = "maplibregl-ctrl";
 
-    // Create the button element
     this._button = document.createElement("button");
     this._button.className = "mood-button";
 
-    // Create the image element
     this._image = document.createElement("img");
-    this._image.src = "./src/assets/transparent-flower.png"; // Path to the image
+    this._image.src = "./src/assets/transparent-flower.png";
     this._image.alt = "mood";
-    this._image.style.width = "80px"; // Adjust size as needed
-    this._image.style.height = "80px"; // Adjust size as needed
+    this._image.style.width = "80px";
+    this._image.style.height = "80px";
 
-    // Append the image to the button
     this._button.appendChild(this._image);
 
-    // Append the button to the container
     this._container.appendChild(this._button);
 
-    // Add click event listener for the button
     this._button.addEventListener("click", this._onClick);
 
     return this._container;
@@ -51,44 +46,76 @@ class MoodButtonControl implements maplibregl.IControl {
   }
 }
 
+const postMoodRating = async (
+  mood: number,
+  userLocation: { lat: number; lon: number }
+) => {
+  try {
+    const response = await fetch("http://127.0.0.1:3000/moods", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mood, userLocation }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to post mood rating");
+    }
+
+    const data = await response.json();
+    console.log("Mood rating posted:", data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 function App() {
   const [showMoodPrompt, setShowMoodPrompt] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
 
-  // Function to handle mood button click
   const handleMoodButtonClick = () => {
-    setShowMoodPrompt(true); // Show the mood prompt form
+    setShowMoodPrompt(true);
   };
 
-  // Function to handle mood form submission
   const handleMoodSubmit = (formData: { mood: number }) => {
-    console.log("Mood submitted:", formData.mood);
-    setShowMoodPrompt(false); // Close the form after submission
+    if (!userLocation) {
+      console.error("User location not available");
+      return;
+    }
+    console.log("Mood rating:", formData.mood, "Location:", userLocation);
+    postMoodRating(formData.mood, userLocation);
+    setShowMoodPrompt(false);
   };
 
-  // Function to handle closing the mood form
   const handleMoodClose = () => {
-    setShowMoodPrompt(false); // Close the form without submitting
+    setShowMoodPrompt(false);
   };
 
   useEffect(() => {
-    // Initialize the map when the component mounts
     const map = new maplibregl.Map({
-      container: "map", // container id
-      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapkey}`, // style URL
-      center: [0, 0], // starting position [lng, lat]
-      zoom: 1, // starting zoom
+      container: "map",
+      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapkey}`,
+      center: [0, 0],
+      zoom: 1,
     });
 
-    map.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-      }),
-      "bottom-right"
-    );
+    const geolocateControl = new maplibregl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      trackUserLocation: true,
+    });
 
+    geolocateControl.on("geolocate", (e) => {
+      const { latitude: lat, longitude: lon } = e.coords;
+      setUserLocation({ lat, lon });
+    });
+
+    map.addControl(geolocateControl, "bottom-right");
     map.addControl(new MoodButtonControl(handleMoodButtonClick), "top-left");
 
     return () => {
