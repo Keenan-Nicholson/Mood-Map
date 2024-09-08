@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MoodPrompt } from "./MoodPrompt";
 
 const mapkey = import.meta.env.VITE_MAPTILER_KEY;
 
@@ -9,6 +10,11 @@ class MoodButtonControl implements maplibregl.IControl {
   private _container!: HTMLDivElement;
   private _button!: HTMLButtonElement;
   private _image!: HTMLImageElement;
+  private _onClick: () => void;
+
+  constructor(onClick: () => void) {
+    this._onClick = onClick;
+  }
 
   onAdd(): HTMLElement {
     this._container = document.createElement("div");
@@ -32,9 +38,7 @@ class MoodButtonControl implements maplibregl.IControl {
     this._container.appendChild(this._button);
 
     // Add click event listener for the button
-    this._button.addEventListener("click", () => {
-      alert("Mood button clicked!");
-    });
+    this._button.addEventListener("click", this._onClick);
 
     return this._container;
   }
@@ -48,6 +52,24 @@ class MoodButtonControl implements maplibregl.IControl {
 }
 
 function App() {
+  const [showMoodPrompt, setShowMoodPrompt] = useState(false);
+
+  // Function to handle mood button click
+  const handleMoodButtonClick = () => {
+    setShowMoodPrompt(true); // Show the mood prompt form
+  };
+
+  // Function to handle mood form submission
+  const handleMoodSubmit = (formData: { mood: number }) => {
+    console.log("Mood submitted:", formData.mood);
+    setShowMoodPrompt(false); // Close the form after submission
+  };
+
+  // Function to handle closing the mood form
+  const handleMoodClose = () => {
+    setShowMoodPrompt(false); // Close the form without submitting
+  };
+
   useEffect(() => {
     // Initialize the map when the component mounts
     const map = new maplibregl.Map({
@@ -67,7 +89,7 @@ function App() {
       "bottom-right"
     );
 
-    map.addControl(new MoodButtonControl(), "top-left");
+    map.addControl(new MoodButtonControl(handleMoodButtonClick), "top-left");
 
     return () => {
       map.remove();
@@ -76,7 +98,10 @@ function App() {
 
   return (
     <div>
-      <div id="map" style={{ width: "100%", height: "89vh" }}></div>
+      <div id="map" style={{ width: "100%", height: "98vh" }}></div>
+      {showMoodPrompt && (
+        <MoodPrompt onSubmit={handleMoodSubmit} onClose={handleMoodClose} />
+      )}
     </div>
   );
 }
