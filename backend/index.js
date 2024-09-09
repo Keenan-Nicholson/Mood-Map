@@ -93,7 +93,14 @@ app.post("/moods", async (req, res) => {
 
 app.get("/moods", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM moods");
+    const result = await pool.query(`
+      SELECT
+        id,
+        ST_AsGeoJSON(geom)::json AS geometry,
+        created_at,
+        edited_at
+      FROM moods
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error(error);
