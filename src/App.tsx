@@ -112,10 +112,29 @@ function App() {
       zoom: 1,
     });
 
-    map.on("style.load", () => {
+    map.on("style.load", async () => {
+      const moods = await fetch("http://127.0.0.1:3000/moods");
+      const moodsData = await moods.json();
+
+      const moodsFeatureCollection = {
+        type: "FeatureCollection",
+        features: moodsData.map((mood: any) => {
+          return {
+            type: "Feature",
+            geometry: mood.geometry,
+            properties: {
+              ...mood,
+              geometry: undefined,
+            },
+          };
+        }),
+      } as any;
+
+      console.log({ moodsFeatureCollection });
+
       map.addSource("moods", {
         type: "geojson",
-        data: "http://127.0.0.1:3000/moods",
+        data: moodsFeatureCollection,
       });
 
       map.addLayer({
