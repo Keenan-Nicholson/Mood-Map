@@ -30,7 +30,6 @@ const pool = new Pool({
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// delete table moods if exists
 async function deleteTableIfExists() {
   try {
     await pool.query("DROP TABLE IF EXISTS moods");
@@ -39,6 +38,7 @@ async function deleteTableIfExists() {
     console.error(error);
   }
 }
+
 // deleteTableIfExists();
 
 async function createTableIfNotExists() {
@@ -46,35 +46,47 @@ async function createTableIfNotExists() {
     await pool.query(
       `CREATE TABLE IF NOT EXISTS moods (
         id SERIAL PRIMARY KEY,
-        mood SMALLINT NOT NULL,
-        latitude DECIMAL NOT NULL,
-        longitude DECIMAL NOT NULL,
+        geom GEOMETRY(POINT, 4326),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
-    console.log("Table created successfully");
+    console.log("Table created successfully or already existed");
   } catch (error) {
-    console.error(error);
+    console.error("Error creating table:", error);
   }
 }
 
 createTableIfNotExists();
 
 app.post("/moods", async (req, res) => {
-  const { mood } = req.body;
-  if (mood === undefined) {
-    return res.status(400).json({ error: "Mood is required" });
+  const { type, geometry, properties } = req.body;
+
+  console.log("Request:", req.body);
+
+  if (type !== "Feature" || !geometry || !properties || !properties.name) {
+    return res.status(400).json({ error: "Invalid GeoJSON structure" });
   }
+
+  const [lon, lat] = geometry.coordinates;
 
   try {
     const result = await pool.query(
-      "INSERT INTO moods (mood, latitude, longitude) VALUES ($1, $2, $3) RETURNING *",
-      [mood, req.body.userLocation.lat, req.body.userLocation.lon]
+      `INSERT INTO moods (geom, created_at, edited_at) 
+       VALUES (ST_GeomFromGeoJSON($1), DEFAULT, DEFAULT) 
+       RETURNING id, geom, created_at, edited_at`,
+      [
+        JSON.stringify({
+          type: geometry.type,
+          coordinates: [lon, lat],
+        }),
+      ]
     );
+
     res.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
+    console.error("Database insertion error:", error.message);
+    console.error("Stack trace:", error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
 });

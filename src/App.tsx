@@ -50,13 +50,23 @@ const postMoodRating = async (
   mood: number,
   userLocation: { lat: number; lon: number }
 ) => {
+  const geojsonFeature = {
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [userLocation.lon, userLocation.lat],
+    },
+    properties: {
+      name: mood,
+    },
+  };
   try {
     const response = await fetch("http://127.0.0.1:3000/moods", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ mood, userLocation }),
+      body: JSON.stringify(geojsonFeature),
     });
 
     if (!response.ok) {
@@ -86,7 +96,6 @@ function App() {
       console.error("User location not available");
       return;
     }
-    console.log("Mood rating:", formData.mood, "Location:", userLocation);
     postMoodRating(formData.mood, userLocation);
     setShowMoodPrompt(false);
   };
@@ -101,6 +110,37 @@ function App() {
       style: `https://api.maptiler.com/maps/streets/style.json?key=${mapkey}`,
       center: [0, 0],
       zoom: 1,
+    });
+
+    map.on("style.load", () => {
+      map.addSource("moods", {
+        type: "geojson",
+        data: "http://127.0.0.1:3000/moods",
+      });
+
+      map.addLayer({
+        id: "moods",
+        type: "circle",
+        source: "moods",
+        paint: {
+          "circle-radius": 5,
+          "circle-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "mood"],
+            1,
+            "blue",
+            2,
+            "green",
+            3,
+            "yellow",
+            4,
+            "orange",
+            5,
+            "red",
+          ],
+        },
+      });
     });
 
     const geolocateControl = new maplibregl.GeolocateControl({
