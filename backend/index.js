@@ -47,6 +47,7 @@ async function createTableIfNotExists() {
       `CREATE TABLE IF NOT EXISTS moods (
         id SERIAL PRIMARY KEY,
         geom GEOMETRY(POINT, 4326),
+        name SMALLINT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
@@ -69,17 +70,19 @@ app.post("/moods", async (req, res) => {
   }
 
   const [lon, lat] = geometry.coordinates;
+  const name = properties.name;
 
   try {
     const result = await pool.query(
-      `INSERT INTO moods (geom, created_at, edited_at) 
-       VALUES (ST_GeomFromGeoJSON($1), DEFAULT, DEFAULT) 
-       RETURNING id, geom, created_at, edited_at`,
+      `INSERT INTO moods (geom, name, created_at, edited_at) 
+       VALUES (ST_GeomFromGeoJSON($1), $2, DEFAULT, DEFAULT) 
+       RETURNING id, geom, name, created_at, edited_at`,
       [
         JSON.stringify({
           type: geometry.type,
           coordinates: [lon, lat],
         }),
+        name,
       ]
     );
 
@@ -97,6 +100,7 @@ app.get("/moods", async (req, res) => {
       SELECT
         id,
         ST_AsGeoJSON(geom)::json AS geometry,
+        name,
         created_at,
         edited_at
       FROM moods
