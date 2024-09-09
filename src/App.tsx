@@ -74,7 +74,6 @@ const postMoodRating = async (
     }
 
     const data = await response.json();
-    console.log("Mood rating posted:", data);
   } catch (error) {
     console.error(error);
   }
@@ -130,44 +129,111 @@ function App() {
         }),
       } as any;
 
-      console.log({ moodsFeatureCollection });
-
       map.addSource("moods", {
         type: "geojson",
         data: moodsFeatureCollection,
       });
 
       map.addLayer({
-        id: "moods",
+        id: "moods-heat",
+        type: "heatmap",
+        source: "moods",
+        maxzoom: 9,
+        paint: {
+          // Increase the heatmap weight based on frequency and property magnitude
+          "heatmap-weight": [
+            "interpolate",
+            ["linear"],
+            ["get", "name"],
+            1,
+            0.1,
+            10,
+            1,
+          ],
+          // Increase the heatmap color weight weight by zoom level
+          // heatmap-intensity is a multiplier on top of heatmap-weight
+          "heatmap-intensity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0,
+            1,
+            9,
+            3,
+          ],
+          // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+          // Begin color ramp at 0-stop with a 0-transparency color
+          // to create a blur-like effect.
+          "heatmap-color": [
+            "interpolate",
+            ["linear"],
+            ["heatmap-density"],
+            0,
+            "rgba(178,24,43,0)",
+            0.2,
+            "rgb(244,165,130)",
+            0.4,
+            "rgb(253,219,199)",
+            0.6,
+            "rgb(217,239,139)",
+            0.8,
+            "rgb(120,198,121)",
+            1,
+            "rgb(35,139,69)",
+          ],
+          // Adjust the heatmap radius by zoom level
+          "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 2, 9, 20],
+          // Transition from heatmap to circle layer by zoom level
+          "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 7, 1, 9, 0],
+        },
+      });
+
+      map.addLayer({
+        id: "moods-point",
         type: "circle",
         source: "moods",
+        minzoom: 7,
         paint: {
-          "circle-radius": 5,
+          // Size circle radius by moods magnitude and zoom level
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            7,
+            ["interpolate", ["linear"], ["get", "name"], 1, 1, 10, 3],
+            16,
+            ["interpolate", ["linear"], ["get", "name"], 1, 5, 6, 25],
+          ],
+          // Color circle by moods magnitude
           "circle-color": [
             "interpolate",
             ["linear"],
             ["get", "name"],
             1,
-            "#FF0000",
+            "rgb(178,24,43, 0.5)",
             2,
-            "#FF3F00",
+            "rgb(214,96,77, 0.5)",
             3,
-            "#FF7F00",
+            "rgb(244,165,130, 0.5)",
             4,
-            "#FFBF00",
+            "rgb(253,219,199, 0.5)",
             5,
-            "#FFFF00",
+            "rgb(255,237,160, 0.5)",
             6,
-            "#BFFF00",
+            "rgb(217,239,139, 0.5)",
             7,
-            "#80FF00",
+            "rgb(173,221,142, 0.5)",
             8,
-            "#40FF00",
+            "rgb(120,198,121, 0.5)",
             9,
-            "#1FFF00",
+            "rgb(67,162,76, 0.5)",
             10,
-            "#00FF00",
+            "rgb(35,139,69, 0.5)",
           ],
+          "circle-stroke-color": "white",
+          "circle-stroke-width": 1,
+          // Transition from heatmap to circle layer by zoom level
+          "circle-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 1],
         },
       });
     });
@@ -175,7 +241,6 @@ function App() {
     const geolocateControl = new maplibregl.GeolocateControl({
       positionOptions: {
         enableHighAccuracy: true,
-        timeout: 10000,
         maximumAge: 0,
       },
       trackUserLocation: true,

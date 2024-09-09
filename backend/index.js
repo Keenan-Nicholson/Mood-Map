@@ -58,12 +58,44 @@ async function createTableIfNotExists() {
   }
 }
 
-createTableIfNotExists();
+// createTableIfNotExists();
+
+async function populateFakeDataInCanada(numberOfEntries = 100) {
+  const minLat = 47.55833;
+  const maxLat = 49.53739;
+  const minLon = -57.919922;
+  const maxLon = -53.613281;
+
+  for (let i = 0; i < numberOfEntries; i++) {
+    const lat = Math.random() * (maxLat - minLat) + minLat; // Random latitude in Canada
+    const lon = Math.random() * (maxLon - minLon) + minLon; // Random longitude in Canada
+    const mood = Math.floor(Math.random() * 10) + 1; // Random mood between 1 and 10
+
+    try {
+      const result = await pool.query(
+        `INSERT INTO moods (geom, name, created_at, edited_at) 
+         VALUES (ST_GeomFromGeoJSON($1), $2, DEFAULT, DEFAULT) 
+         RETURNING id, geom, name, created_at, edited_at`,
+        [
+          JSON.stringify({
+            type: "Point",
+            coordinates: [lon, lat],
+          }),
+          mood,
+        ]
+      );
+      console.log(`Inserted row with id: ${result.rows[0].id}`);
+    } catch (error) {
+      console.error("Database insertion error:", error.message);
+    }
+  }
+}
+
+// Call the function to populate the database with Canada-based data
+populateFakeDataInCanada(1000); // You can adjust the number of entries as needed
 
 app.post("/moods", async (req, res) => {
   const { type, geometry, properties } = req.body;
-
-  console.log("Request:", req.body);
 
   if (type !== "Feature" || !geometry || !properties || !properties.name) {
     return res.status(400).json({ error: "Invalid GeoJSON structure" });
