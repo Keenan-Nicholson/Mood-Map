@@ -27,7 +27,7 @@ export const MoodPrompt: React.FC<MoodPromptProps> = ({
           <input
             type="range"
             min="1"
-            max="10"
+            max="5"
             value={mood}
             onChange={(e) => setMood(parseInt(e.target.value))}
           />

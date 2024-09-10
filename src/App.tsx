@@ -72,8 +72,6 @@ const postMoodRating = async (
     if (!response.ok) {
       throw new Error("Failed to post mood rating");
     }
-
-    const data = await response.json();
   } catch (error) {
     console.error(error);
   }
@@ -129,6 +127,8 @@ function App() {
         }),
       } as any;
 
+      console.log(moodsFeatureCollection.features[0].geometry.coordinates);
+
       map.addSource("moods", {
         type: "geojson",
         data: moodsFeatureCollection,
@@ -169,17 +169,15 @@ function App() {
             ["linear"],
             ["heatmap-density"],
             0,
-            "rgba(178,24,43,0)",
-            0.2,
-            "rgb(244,165,130)",
-            0.4,
-            "rgb(253,219,199)",
-            0.6,
+            "rgba(238, 75, 43,0)",
+            0.3,
+            "rgb(255, 165, 0)",
+            0.5,
+            "rgb(255, 255, 51)",
+            0.7,
             "rgb(217,239,139)",
-            0.8,
-            "rgb(120,198,121)",
             1,
-            "rgb(35,139,69)",
+            "rgb(50, 205, 50)",
           ],
           // Adjust the heatmap radius by zoom level
           "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 2, 9, 20],
@@ -200,9 +198,9 @@ function App() {
             ["linear"],
             ["zoom"],
             7,
-            ["interpolate", ["linear"], ["get", "name"], 1, 1, 10, 3],
+            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 5],
             16,
-            ["interpolate", ["linear"], ["get", "name"], 1, 5, 6, 25],
+            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 25],
           ],
           // Color circle by moods magnitude
           "circle-color": [
@@ -210,31 +208,50 @@ function App() {
             ["linear"],
             ["get", "name"],
             1,
-            "rgb(178,24,43, 0.5)",
+            "rgba(238, 75, 43, 0.6)",
             2,
-            "rgb(214,96,77, 0.5)",
+            "rgba(255, 165, 0, 0.6)",
             3,
-            "rgb(244,165,130, 0.5)",
+            "rgba(255, 255, 51, 0.6)",
             4,
-            "rgb(253,219,199, 0.5)",
+            "rgba(173, 255, 47, 0.6)",
             5,
-            "rgb(255,237,160, 0.5)",
-            6,
-            "rgb(217,239,139, 0.5)",
-            7,
-            "rgb(173,221,142, 0.5)",
-            8,
-            "rgb(120,198,121, 0.5)",
-            9,
-            "rgb(67,162,76, 0.5)",
-            10,
-            "rgb(35,139,69, 0.5)",
+            "rgba(50, 205, 50, 0.6)",
           ],
           "circle-stroke-color": "white",
           "circle-stroke-width": 1,
           // Transition from heatmap to circle layer by zoom level
           "circle-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 1],
         },
+      });
+
+      map.on("click", "moods-point", (e) => {
+        if (!e.features) return;
+
+        const features = e.features[0];
+
+        const coordinates = (
+          features.geometry as GeoJSON.Point
+        ).coordinates.slice();
+
+        const description = features.properties.name;
+
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        new maplibregl.Popup()
+          .setLngLat(coordinates as maplibregl.LngLatLike)
+          .setHTML(`<p>mood:${description}</p>`)
+          .addTo(map);
+
+        map.on("mouseenter", "moods-point", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "moods-point", () => {
+          map.getCanvas().style.cursor = "";
+        });
       });
     });
 

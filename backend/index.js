@@ -67,9 +67,9 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
   const maxLon = -53.613281;
 
   for (let i = 0; i < numberOfEntries; i++) {
-    const lat = Math.random() * (maxLat - minLat) + minLat; // Random latitude in Canada
-    const lon = Math.random() * (maxLon - minLon) + minLon; // Random longitude in Canada
-    const mood = Math.floor(Math.random() * 10) + 1; // Random mood between 1 and 10
+    const lat = Math.random() * (maxLat - minLat) + minLat;
+    const lon = Math.random() * (maxLon - minLon) + minLon;
+    const mood = Math.floor(Math.random() * 5) + 1;
 
     try {
       const result = await pool.query(
@@ -91,8 +91,7 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
   }
 }
 
-// Call the function to populate the database with Canada-based data
-populateFakeDataInCanada(1000); // You can adjust the number of entries as needed
+// populateFakeDataInCanada(500);
 
 app.post("/moods", async (req, res) => {
   const { type, geometry, properties } = req.body;

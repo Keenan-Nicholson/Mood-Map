@@ -51,3 +51,9 @@
 .mood-form button {
   margin-top: 10px;
 }
+
+.maplibregl-popup {
+  max-width: 400px;
+  font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+  color: black;
+}
