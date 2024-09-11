@@ -48,6 +48,7 @@ async function createTableIfNotExists() {
         id SERIAL PRIMARY KEY,
         geom GEOMETRY(POINT, 4326),
         name SMALLINT NOT NULL,
+        description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
@@ -70,18 +71,20 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
     const lat = Math.random() * (maxLat - minLat) + minLat;
     const lon = Math.random() * (maxLon - minLon) + minLon;
     const mood = Math.floor(Math.random() * 5) + 1;
+    const description = `This is a fake mood entry with mood ${mood}`;
 
     try {
       const result = await pool.query(
-        `INSERT INTO moods (geom, name, created_at, edited_at) 
-         VALUES (ST_GeomFromGeoJSON($1), $2, DEFAULT, DEFAULT) 
-         RETURNING id, geom, name, created_at, edited_at`,
+        `INSERT INTO moods (geom, name, description, created_at, edited_at) 
+         VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
+         RETURNING id, geom, name, description, created_at, edited_at`,
         [
           JSON.stringify({
             type: "Point",
             coordinates: [lon, lat],
           }),
           mood,
+          description,
         ]
       );
       console.log(`Inserted row with id: ${result.rows[0].id}`);
@@ -102,18 +105,20 @@ app.post("/moods", async (req, res) => {
 
   const [lon, lat] = geometry.coordinates;
   const name = properties.name;
+  const description = properties.description;
 
   try {
     const result = await pool.query(
-      `INSERT INTO moods (geom, name, created_at, edited_at) 
-       VALUES (ST_GeomFromGeoJSON($1), $2, DEFAULT, DEFAULT) 
-       RETURNING id, geom, name, created_at, edited_at`,
+      `INSERT INTO moods (geom, name, description, created_at, edited_at) 
+       VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
+       RETURNING id, geom, name, description, created_at, edited_at`,
       [
         JSON.stringify({
           type: geometry.type,
           coordinates: [lon, lat],
         }),
         name,
+        description,
       ]
     );
 
@@ -132,6 +137,7 @@ app.get("/moods", async (req, res) => {
         id,
         ST_AsGeoJSON(geom)::json AS geometry,
         name,
+        description,
         created_at,
         edited_at
       FROM moods

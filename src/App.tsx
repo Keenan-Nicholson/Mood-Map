@@ -48,7 +48,8 @@ class MoodButtonControl implements maplibregl.IControl {
 
 const postMoodRating = async (
   mood: number,
-  userLocation: { lat: number; lon: number }
+  userLocation: { lat: number; lon: number },
+  description: string
 ) => {
   const geojsonFeature = {
     type: "Feature",
@@ -58,6 +59,7 @@ const postMoodRating = async (
     },
     properties: {
       name: mood,
+      description: description,
     },
   };
   try {
@@ -88,12 +90,15 @@ function App() {
     setShowMoodPrompt(true);
   };
 
-  const handleMoodSubmit = (formData: { mood: number }) => {
+  const handleMoodSubmit = (formData: {
+    mood: number;
+    description: string;
+  }) => {
     if (!userLocation) {
       console.error("User location not available");
       return;
     }
-    postMoodRating(formData.mood, userLocation);
+    postMoodRating(formData.mood, userLocation, formData.description);
     setShowMoodPrompt(false);
   };
 
@@ -243,7 +248,7 @@ function App() {
         new maplibregl.Popup()
           .setLngLat(coordinates as maplibregl.LngLatLike)
           .setHTML(
-            `<h2 style="color: #0050FF; font-weight: bold">mood</h2><h3>${description}</h3>`
+            `<h2 style="color: #0050FF; font-weight: bold">mood</h2><h3>${description}</h3> <p>${features.properties.description}</p>`
           )
           .addTo(map);
 
