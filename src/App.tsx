@@ -242,7 +242,9 @@ function App() {
 
         new maplibregl.Popup()
           .setLngLat(coordinates as maplibregl.LngLatLike)
-          .setHTML(`<p>mood:${description}</p>`)
+          .setHTML(
+            `<h2 style="color: #0050FF; font-weight: bold">mood</h2><h3>${description}</h3>`
+          )
           .addTo(map);
 
         map.on("mouseenter", "moods-point", () => {
