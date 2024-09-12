@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for backend-green-log-7069 on 2024-09-12T15:52:24-02:30
+# fly.toml app configuration file generated for backend-moodmap on 2024-09-12T18:51:02-02:30
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'backend-green-log-7069'
+app = 'backend-moodmap'
 primary_region = 'ewr'
 
 [build]
@@ -17,6 +17,6 @@ primary_region = 'ewr'
   processes = ['app']
 
 [[vm]]
-  memory = '512mb'
+  memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
