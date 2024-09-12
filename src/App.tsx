@@ -27,7 +27,7 @@ class MoodButtonControl implements maplibregl.IControl {
     this._button.className = "mood-button";
 
     this._image = document.createElement("img");
-    this._image.src = "./src/assets/transparent-flower.png";
+    this._image.src = "/transparent-flower.png";
     this._image.alt = "mood";
     this._image.style.width = "80px";
     this._image.style.height = "80px";
