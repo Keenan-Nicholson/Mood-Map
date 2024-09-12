@@ -66,7 +66,7 @@ const postMoodRating = async (
     },
   };
   try {
-    const response = await fetch("http://127.0.0.1:3000/moods", {
+    const response = await fetch(import.meta.env.VITE_CONNECTION_STRING, {
       method: "POST",
       credentials: "include",
       headers: {
