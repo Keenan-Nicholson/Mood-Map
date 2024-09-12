@@ -3,6 +3,9 @@ import "./App.css";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MoodPrompt } from "./MoodPrompt";
+import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const mapkey = import.meta.env.VITE_MAPTILER_KEY;
 
@@ -72,6 +75,10 @@ const postMoodRating = async (
       body: JSON.stringify(geojsonFeature),
     });
 
+    if (response.status === 429) {
+      toast.error("You can only post one mood rating every minute.");
+    }
+
     if (!response.ok) {
       throw new Error("Failed to post mood rating");
     }
@@ -97,6 +104,7 @@ function App() {
   }) => {
     if (!userLocation) {
       console.error("User location not available");
+      toast.error("Press the location button to post a mood rating.");
       return;
     }
     postMoodRating(formData.mood, userLocation, formData.description);
@@ -284,6 +292,13 @@ function App() {
 
   return (
     <div>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={true}
+        newestOnTop={false}
+        pauseOnHover={true}
+      />
       <div id="map" style={{ width: "100%", height: "98vh" }}></div>
       {showMoodPrompt && (
         <MoodPrompt onSubmit={handleMoodSubmit} onClose={handleMoodClose} />

@@ -61,3 +61,10 @@
 .maplibregl-popup-close-button {
   color: black;
 }
+.Toastify__toast-container--top-center {
+  max-width: 300px;
+  position: absolute !important;
+  top: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}

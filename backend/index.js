@@ -39,11 +39,11 @@ app.use(
     store: new memoryStore({
       checkPeriod: 86400000,
     }),
-    secret: "temporary-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-      secure: true,
+      secure: false,
       sameSite: "none",
     },
   })
@@ -55,7 +55,6 @@ const apiLimiter = rateLimit({
   message:
     "Too many requests from this session, please try again after 1 minute.",
   keyGenerator: (req) => {
-    console.log(req.sessionID);
     return req.sessionID;
   },
 });
@@ -126,47 +125,39 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
 
 // populateFakeDataInCanada(500);
 
-app.post(
-  "/moods",
-  apiLimiter,
-  (req, res, next) => {
-    console.log("API Limiter applied:", req.sessionID);
-    next();
-  },
-  async (req, res) => {
-    const { type, geometry, properties } = req.body;
+app.post("/moods", apiLimiter, async (req, res) => {
+  const { type, geometry, properties } = req.body;
 
-    if (type !== "Feature" || !geometry || !properties || !properties.name) {
-      return res.status(400).json({ error: "Invalid GeoJSON structure" });
-    }
+  if (type !== "Feature" || !geometry || !properties || !properties.name) {
+    return res.status(400).json({ error: "Invalid GeoJSON structure" });
+  }
 
-    const [lon, lat] = geometry.coordinates;
-    const name = properties.name;
-    const description = properties.description;
+  const [lon, lat] = geometry.coordinates;
+  const name = properties.name;
+  const description = properties.description;
 
-    try {
-      const result = await pool.query(
-        `INSERT INTO moods (geom, name, description, created_at, edited_at) 
+  try {
+    const result = await pool.query(
+      `INSERT INTO moods (geom, name, description, created_at, edited_at) 
        VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
        RETURNING id, geom, name, description, created_at, edited_at`,
-        [
-          JSON.stringify({
-            type: geometry.type,
-            coordinates: [lon, lat],
-          }),
-          name,
-          description,
-        ]
-      );
+      [
+        JSON.stringify({
+          type: geometry.type,
+          coordinates: [lon, lat],
+        }),
+        name,
+        description,
+      ]
+    );
 
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error("Database insertion error:", error.message);
-      console.error("Stack trace:", error.stack);
-      res.status(500).json({ error: "Internal server error" });
-    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Database insertion error:", error.message);
+    console.error("Stack trace:", error.stack);
+    res.status(500).json({ error: "Internal server error" });
   }
-);
+});
 
 app.get("/moods", async (req, res) => {
   try {
