@@ -285,6 +285,10 @@ function App() {
     });
 
     map.addControl(geolocateControl, "bottom-right");
+    map.on("load", () => {
+      // Automatically start geolocation on load
+      geolocateControl.trigger();
+    });
     map.addControl(new MoodButtonControl(handleMoodButtonClick), "top-left");
 
     return () => {

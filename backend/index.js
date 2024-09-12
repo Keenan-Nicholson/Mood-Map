@@ -96,12 +96,13 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
     const lon = Math.random() * (maxLon - minLon) + minLon;
     const mood = Math.floor(Math.random() * 5) + 1;
     const description = `This is a fake mood entry with mood ${mood}`;
+    const ipAddress = "";
 
     try {
       const result = await pool.query(
-        `INSERT INTO moods (geom, name, description,  created_at, edited_at) 
-         VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
-         RETURNING id, geom, name, description, created_at, edited_at`,
+        `INSERT INTO moods (geom, name, description, user_ip,  created_at, edited_at) 
+         VALUES (ST_GeomFromGeoJSON($1), $2, $3, $4, DEFAULT, DEFAULT) 
+         RETURNING id, geom, name, description, user_ip, created_at, edited_at`,
         [
           JSON.stringify({
             type: "Point",
@@ -109,6 +110,7 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
           }),
           mood,
           description,
+          ipAddress,
         ]
       );
       console.log(`Inserted row with id: ${result.rows[0].id}`);
