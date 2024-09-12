@@ -126,7 +126,7 @@ function App() {
     });
 
     map.on("style.load", async () => {
-      const moods = await fetch("http://127.0.0.1:3000/moods");
+      const moods = await fetch(import.meta.env.VITE_CONNECTION_STRING);
       const moodsData = await moods.json();
 
       const moodsFeatureCollection = {
