@@ -65,6 +65,7 @@ const postMoodRating = async (
   try {
     const response = await fetch("http://127.0.0.1:3000/moods", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -131,8 +132,6 @@ function App() {
           };
         }),
       } as any;
-
-      console.log(moodsFeatureCollection.features[0].geometry.coordinates);
 
       map.addSource("moods", {
         type: "geojson",

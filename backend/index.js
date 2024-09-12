@@ -2,6 +2,9 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const session = require("express-session");
+const rateLimit = require("express-rate-limit");
+const memoryStore = require("memorystore")(session);
 
 dotenv.config();
 
@@ -17,6 +20,7 @@ const corsOptions = {
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ],
+  credentials: true,
   optionsSuccessStatus: 200,
 };
 
@@ -29,6 +33,32 @@ const pool = new Pool({
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+app.use(
+  session({
+    store: new memoryStore({
+      checkPeriod: 86400000,
+    }),
+    secret: "temporary-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,
+      sameSite: "none",
+    },
+  })
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 1000,
+  max: 1,
+  message:
+    "Too many requests from this session, please try again after 1 minute.",
+  keyGenerator: (req) => {
+    console.log(req.sessionID);
+    return req.sessionID;
+  },
+});
 
 async function deleteTableIfExists() {
   try {
@@ -96,7 +126,7 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
 
 // populateFakeDataInCanada(500);
 
-app.post("/moods", async (req, res) => {
+app.post("/moods", apiLimiter, async (req, res) => {
   const { type, geometry, properties } = req.body;
 
   if (type !== "Feature" || !geometry || !properties || !properties.name) {
