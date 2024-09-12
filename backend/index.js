@@ -49,8 +49,15 @@ app.use(
   })
 );
 
+app.set("trust proxy", true);
+
+app.use((req, res, next) => {
+  req.clientIp = req.headers["x-forwarded-for"] || req.ip;
+  next();
+});
+
 const apiLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  windowMs: 5 * 60 * 1000,
   max: 1,
   message:
     "Too many requests from this session, please try again after 1 minute.",
@@ -58,17 +65,6 @@ const apiLimiter = rateLimit({
     return req.sessionID;
   },
 });
-
-async function deleteTableIfExists() {
-  try {
-    await pool.query("DROP TABLE IF EXISTS moods");
-    console.log("Table deleted successfully");
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// deleteTableIfExists();
 
 async function createTableIfNotExists() {
   try {
@@ -78,6 +74,7 @@ async function createTableIfNotExists() {
         geom GEOMETRY(POINT, 4326),
         name SMALLINT NOT NULL,
         description TEXT,
+        user_ip VARCHAR(45),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
@@ -87,8 +84,6 @@ async function createTableIfNotExists() {
     console.error("Error creating table:", error);
   }
 }
-
-// createTableIfNotExists();
 
 async function populateFakeDataInCanada(numberOfEntries = 100) {
   const minLat = 47.55833;
@@ -104,7 +99,7 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
 
     try {
       const result = await pool.query(
-        `INSERT INTO moods (geom, name, description, created_at, edited_at) 
+        `INSERT INTO moods (geom, name, description,  created_at, edited_at) 
          VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
          RETURNING id, geom, name, description, created_at, edited_at`,
         [
@@ -123,10 +118,22 @@ async function populateFakeDataInCanada(numberOfEntries = 100) {
   }
 }
 
+async function deleteTableIfExists() {
+  try {
+    await pool.query("DROP TABLE IF EXISTS moods");
+    console.log("Table deleted successfully");
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// deleteTableIfExists();
 // populateFakeDataInCanada(500);
+createTableIfNotExists();
 
 app.post("/moods", apiLimiter, async (req, res) => {
   const { type, geometry, properties } = req.body;
+  const ipAddress = req.clientIp;
 
   if (type !== "Feature" || !geometry || !properties || !properties.name) {
     return res.status(400).json({ error: "Invalid GeoJSON structure" });
@@ -138,9 +145,9 @@ app.post("/moods", apiLimiter, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `INSERT INTO moods (geom, name, description, created_at, edited_at) 
-       VALUES (ST_GeomFromGeoJSON($1), $2, $3, DEFAULT, DEFAULT) 
-       RETURNING id, geom, name, description, created_at, edited_at`,
+      `INSERT INTO moods (geom, name, description, user_ip, created_at, edited_at) 
+       VALUES (ST_GeomFromGeoJSON($1), $2, $3, $4, DEFAULT, DEFAULT) 
+       RETURNING id, geom, name, description, user_ip, created_at, edited_at`,
       [
         JSON.stringify({
           type: geometry.type,
@@ -148,6 +155,7 @@ app.post("/moods", apiLimiter, async (req, res) => {
         }),
         name,
         description,
+        ipAddress,
       ]
     );
 
@@ -167,6 +175,7 @@ app.get("/moods", async (req, res) => {
         ST_AsGeoJSON(geom)::json AS geometry,
         name,
         description,
+        user_ip,
         created_at,
         edited_at
       FROM moods

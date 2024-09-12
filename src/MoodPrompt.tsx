@@ -36,7 +36,7 @@ export const MoodPrompt: React.FC<MoodPromptProps> = ({
           />
         </div>
         <textarea
-          maxLength={75}
+          maxLength={100}
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}

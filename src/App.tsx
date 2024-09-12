@@ -76,12 +76,14 @@ const postMoodRating = async (
     });
 
     if (response.status === 429) {
-      toast.error("You can only post one mood rating every minute.");
+      toast.error("You can only post one mood rating per 5 minutes.");
     }
 
     if (!response.ok) {
       throw new Error("Failed to post mood rating");
     }
+
+    toast.success("Mood rating posted successfully!");
   } catch (error) {
     console.error(error);
   }
@@ -104,7 +106,7 @@ function App() {
   }) => {
     if (!userLocation) {
       console.error("User location not available");
-      toast.error("Press the location button to post a mood rating.");
+      toast.error("Press the locate button to post a mood rating.");
       return;
     }
     postMoodRating(formData.mood, userLocation, formData.description);
@@ -210,9 +212,9 @@ function App() {
             ["linear"],
             ["zoom"],
             7,
-            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 5],
+            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 7],
             16,
-            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 25],
+            ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 10],
           ],
           // Color circle by moods magnitude
           "circle-color": [
