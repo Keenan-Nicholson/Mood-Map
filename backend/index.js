@@ -62,9 +62,10 @@ const apiLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 1,
   message:
-    "Too many requests from this session, please try again after 1 minute.",
+    "Too many requests from this session or IP, please try again after 1 minute.",
   keyGenerator: (req) => {
-    return req.sessionID;
+    const ipAddress = req.clientIp;
+    return `${req.sessionID}-${ipAddress}`;
   },
 });
 
@@ -76,7 +77,7 @@ async function createTableIfNotExists() {
         geom GEOMETRY(POINT, 4326),
         name SMALLINT NOT NULL,
         description TEXT,
-        user_ip VARCHAR(45),
+        user_ip VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
@@ -179,7 +180,6 @@ app.get("/moods", async (req, res) => {
         ST_AsGeoJSON(geom)::json AS geometry,
         name,
         description,
-        user_ip,
         created_at,
         edited_at
       FROM moods
