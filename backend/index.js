@@ -65,7 +65,7 @@ const apiLimiter = rateLimit({
     "Too many requests from this session or IP, please try again after 1 minute.",
   keyGenerator: (req) => {
     const ipAddress = req.clientIp;
-    return `${req.sessionID}-${ipAddress}`;
+    return ipAddress;
   },
 });
 
