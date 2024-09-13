@@ -291,6 +291,15 @@ function App() {
     });
     map.addControl(new MoodButtonControl(handleMoodButtonClick), "top-left");
 
+    // disable map rotation using right click + drag
+    map.dragRotate.disable();
+
+    // disable map rotation using keyboard
+    map.keyboard.disable();
+
+    // disable map rotation using touch rotation gesture
+    map.touchZoomRotate.disableRotation();
+
     return () => {
       map.remove();
     };
@@ -305,7 +314,7 @@ function App() {
         newestOnTop={false}
         pauseOnHover={true}
       />
-      <div id="map" style={{ width: "100%", height: "98dvh" }}></div>
+      <div id="map" style={{ width: "100%", height: "98svh" }}></div>
       {showMoodPrompt && (
         <MoodPrompt onSubmit={handleMoodSubmit} onClose={handleMoodClose} />
       )}

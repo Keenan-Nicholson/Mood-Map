@@ -148,6 +148,10 @@ app.post("/moods", apiLimiter, async (req, res) => {
   const name = properties.name;
   const description = properties.description;
 
+  if (name < 1 || name > 5) {
+    return res.status(400).json({ error: "Invalid mood value" });
+  }
+
   try {
     const result = await pool.query(
       `INSERT INTO moods (geom, name, description, user_ip, created_at, edited_at) 
