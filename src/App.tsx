@@ -305,7 +305,7 @@ function App() {
         newestOnTop={false}
         pauseOnHover={true}
       />
-      <div id="map" style={{ width: "100%", height: "98vh" }}></div>
+      <div id="map" style={{ width: "100%", height: "98dvh" }}></div>
       {showMoodPrompt && (
         <MoodPrompt onSubmit={handleMoodSubmit} onClose={handleMoodClose} />
       )}
