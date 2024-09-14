@@ -158,10 +158,10 @@ function App() {
           "heatmap-weight": [
             "interpolate",
             ["linear"],
-            ["get", "name"],
+            ["heatmap-density"],
+            0,
+            0.3,
             1,
-            0.1,
-            10,
             1,
           ],
           // Increase the heatmap color weight weight by zoom level
@@ -183,13 +183,9 @@ function App() {
             ["linear"],
             ["heatmap-density"],
             0,
-            "rgba(238, 75, 43,0)",
-            0.3,
-            "rgb(255, 165, 0)",
+            "rgba(238, 75, 43, 0)",
             0.5,
-            "rgb(255, 255, 51)",
-            0.7,
-            "rgb(217,239,139)",
+            "rgba(255, 255, 51)",
             1,
             "rgb(50, 205, 50)",
           ],
@@ -206,7 +202,7 @@ function App() {
         source: "moods",
         minzoom: 7,
         paint: {
-          // Size circle radius by moods magnitude and zoom level
+          // Size circle radius by moods and zoom level
           "circle-radius": [
             "interpolate",
             ["linear"],
@@ -216,7 +212,6 @@ function App() {
             16,
             ["interpolate", ["linear"], ["get", "name"], 1, 5, 5, 10],
           ],
-          // Color circle by moods magnitude
           "circle-color": [
             "interpolate",
             ["linear"],
